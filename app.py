@@ -88,6 +88,26 @@ def home():
     return render_template("admin/index.html", super_admin_name=super_admin_name)
 
 
+@app.route('/reset-superadmin-password')
+def reset_superadmin_password():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Hash the default password "admin"
+    hashed_password = bcrypt.hashpw("admin".encode('utf-8'), bcrypt.gensalt())
+    
+    # Update password for the config super admin email
+    cursor.execute(
+        "UPDATE admin SET password = ? WHERE email = ?",
+        (hashed_password, config.MAIL_USERNAME)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return "Super Admin password has been successfully reset to 'admin'. Please try logging in now!"
+
+
 
 
 # ---------------------------------------------------------
