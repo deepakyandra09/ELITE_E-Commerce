@@ -108,9 +108,7 @@ pip-selfcheck.json
 database/*.sqlite
 database/*.db
 
-# Uploaded media (avoid uploading user-uploaded images)
-static/uploads/product_images/*
-!static/uploads/product_images/.gitkeep
+# Uploaded media (avoid uploading user-uploaded profile images)
 static/uploads/admin_profiles/*
 !static/uploads/admin_profiles/.gitkeep
 static/uploads/user_profiles/*
