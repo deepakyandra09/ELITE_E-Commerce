@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPI Payment - Elite Cart</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .payment-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: var(--bg);
+        }
+
+        .payment-card {
+            width: 100%;
+            max-width: 550px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 3.5rem 3rem;
+            box-shadow: 0 20px 40px -15px rgb(0 0 0 / 0.15);
+            text-align: center;
+        }
+
+        .amount-badge {
+            background: var(--surface-2);
+            padding: 2rem;
+            border-radius: 20px;
+            margin-bottom: 2.5rem;
+            border: 1px solid var(--border);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .qr-container {
+            margin: 2.5rem 0;
+            display: inline-block;
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            background: #fff;
+            border: 2px solid var(--border);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .qr-container:hover {
+            border-color: var(--primary);
+            transform: scale(1.02);
+        }
+
+        .qr-image {
+            width: 220px;
+            height: 220px;
+            display: block;
+        }
+
+        .upi-details {
+            font-size: 0.95rem;
+            background: rgba(var(--primary-rgb), 0.03);
+            border: 1.5px dashed var(--primary-light);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 2.5rem;
+            color: var(--text);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .copy-btn:hover {
+            color: var(--primary-dark);
+            transform: scale(1.1);
+        }
+
+        .input-utr {
+            width: 100%;
+            padding: 1.1rem 1.5rem;
+            border: 1.5px solid var(--border);
+            border-radius: 16px;
+            font-family: inherit;
+            font-size: 1rem;
+            text-align: center;
+            letter-spacing: 2px;
+            font-weight: 700;
+            outline: none;
+            transition: var(--transition);
+            margin-bottom: 1rem;
+        }
+
+        .input-utr:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px var(--primary-glow);
+        }
+
+        @media (max-width: 768px) {
+            .payment-wrapper {
+                padding: 1rem;
+            }
+
+            .payment-card {
+                padding: 3rem 1.5rem !important;
+            }
+
+            .payment-card h1 {
+                font-size: 1.8rem !important;
+            }
+
+            .amount-badge h2 {
+                font-size: 2.5rem !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="payment-wrapper">
+        <div class="payment-card animate">
+            <div style="margin-bottom: 2.5rem;">
+                <span style="font-size: 0.75rem; font-weight: 800; color: var(--primary); letter-spacing: 6px; text-transform: uppercase;">Step 2: Payment</span>
+                <h1 style="font-size: 2.2rem; margin: 0.5rem 0 0; letter-spacing: -1.5px; color: var(--text); font-weight: 800;">
+                    UPI Scan & Pay</h1>
+                <p style="color: var(--text-dim); margin-top: 0.5rem; font-size: 0.9rem; font-weight: 500;">Scan QR using GPay, PhonePe, Paytm, or any UPI app</p>
+            </div>
+
+            <div class="amount-badge">
+                <p style="font-size: 0.65rem; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 0.5rem;">
+                    Amount to Pay</p>
+                <h2 style="font-size: 3rem; font-weight: 900; color: var(--primary); margin: 0; letter-spacing: -1px;">
+                    ₹{{ "{:,.2f}".format(grand_total) }}</h2>
+            </div>
+
+            <div class="qr-container">
+                <img class="qr-image" src="{{ qr_code_url }}" alt="UPI Payment QR Code">
+            </div>
+
+            <div class="upi-details">
+                <span>UPI ID: <span id="upi-id">{{ upi_vpa }}</span></span>
+                <button class="copy-btn" onclick="copyUpiId()" title="Copy UPI ID">
+                    <i class="fa-regular fa-copy"></i>
+                </button>
+            </div>
+
+            <form action="{{ url_for('payment_success') }}" method="POST">
+                <input type="hidden" name="razorpay_order_id" value="upi_order_{{ range(100000, 999999)|random }}">
+                
+                <div style="text-align: left; margin-bottom: 2.5rem;">
+                    <label style="font-size: 0.7rem; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.75rem; display: block;">
+                        Enter 12-Digit UPI Ref No. / UTR (Simulated)
+                    </label>
+                    <input type="text" name="razorpay_payment_id" class="input-utr" placeholder="123456789012" minlength="12" maxlength="12" pattern="\d{12}" required>
+                    <p style="font-size: 0.75rem; color: var(--text-dim); text-align: center; margin-top: 0.5rem;">
+                        <i class="fa-solid fa-circle-info"></i> For demo/testing, enter any 12 digit number.
+                    </p>
+                </div>
+
+                <button type="submit" class="btn-buy-bespoke" style="width: 100%; padding: 1.5rem; font-size: 1.1rem; border-radius: 18px; box-shadow: 0 20px 40px var(--primary-glow);">
+                    <i class="fa-solid fa-shield-check" style="margin-right: 10px;"></i> VERIFY & SUBMIT PAYMENT
+                </button>
+            </form>
+
+            <div style="margin-top: 3.5rem; text-align: center; border-top: 1.5px solid var(--border); padding-top: 2rem;">
+                <a href="/user/checkout" style="color: var(--text-dim); text-decoration: none; font-size: 0.85rem; font-weight: 800; letter-spacing: 0.5px; transition: var(--transition);" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-dim)'">
+                    &larr; CANCEL AND RETURN
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function copyUpiId() {
+            var upiText = document.getElementById("upi-id").innerText;
+            navigator.clipboard.writeText(upiText).then(function() {
+                alert("UPI ID copied to clipboard!");
+            }, function(err) {
+                console.error("Could not copy text: ", err);
+            });
+        }
+    </script>
+</body>
+
+</html>
