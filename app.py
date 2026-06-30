@@ -48,6 +48,30 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+# ---------------- DATABASE AUTO-INITIALIZATION ----------------
+from init_db import init_db
+from seed_admin import seed_admin
+from seed_final import seed_final
+
+try:
+    init_db()
+    seed_admin()
+    
+    # Check if products table is empty before seeding products
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM products")
+    count = cursor.fetchone()[0]
+    cursor.close()
+    conn.close()
+    
+    if count == 0:
+        seed_final()
+        print("Database auto-seeded with products.")
+except Exception as e:
+    print(f"Error during database auto-initialization: {e}")
+
+
 
 
 @app.route('/')
